@@ -91,7 +91,24 @@ LIMIT 1;
 
 -- 5. Which item was the most popular for each customer?
 
-
+--- CTE & DENSE_RANK() ---
+WITH item_count_cte AS (
+  SELECT
+  	sales.customer_id
+  	, menu.product_name
+  	, COUNT (sales.product_id) as item_count
+  	, DENSE_RANK () OVER (PARTITION BY sales.customer_id ORDER BY COUNT (sales.product_id) desc) AS item_count_rank
+  FROM dannys_diner.sales
+  JOIN dannys_diner.menu
+  	ON sales.product_id = menu.product_id
+  GROUP BY sales.customer_id, menu.product_name
+  )
+SELECT 
+	customer_id
+    , product_name
+    , item_count
+FROM item_count_cte
+WHERE item_count_rank = 1;
 
 
 -- 6. Which item was purchased first by the customer after they became a member?
