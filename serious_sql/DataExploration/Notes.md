@@ -153,6 +153,32 @@ WHERE
   AND measure = 'blood_pressure';
 ```
 
+| id                                       | log_date                 | measure        | measure_value | systolic | diastolic |
+|------------------------------------------|--------------------------|----------------|---------------|----------|-----------|
+| d14df0c8c1a5f172476b2a1b1f53cf23c6992027 | 2020-10-15T00:00:00.000Z | blood_pressure | 140           | 140      | 113       |
+| 9fef7a7b06dea13eac08b2b609a008d6a178d0b7 | 2020-10-02T00:00:00.000Z | blood_pressure | 114           | 114      | 80        |
+| 0b494d455a27f8a2709d7da6c98796ea0e629690 | 2020-10-19T00:00:00.000Z | blood_pressure | 132           | 132      | 94        |
+| ee653a96022cc3878e76d196b1667d95beca2db6 | 2020-10-09T00:00:00.000Z | blood_pressure | 105           | 105      | 68        |
+| 46d921f1111a1d1ad5dd6eb6e4d0533ab61907c9 | 2020-04-12T00:00:00.000Z | blood_pressure | 149           | 149      | 85        |
+| 46d921f1111a1d1ad5dd6eb6e4d0533ab61907c9 | 2020-04-10T00:00:00.000Z | blood_pressure | 156           | 156      | 88        |
+| 46d921f1111a1d1ad5dd6eb6e4d0533ab61907c9 | 2020-04-29T00:00:00.000Z | blood_pressure | 142           | 142      | 84        |
+| 0f7b13f3f0512e6546b8d2c0d56e564a2408536a | 2020-04-07T00:00:00.000Z | blood_pressure | 131           | 131      | 71        |
+| 0f7b13f3f0512e6546b8d2c0d56e564a2408536a | 2020-04-08T00:00:00.000Z | blood_pressure | 128           | 128      | 77        |
+| abc634a555bbba7d6d6584171fdfa206ebf6c9a0 | 2020-03-09T00:00:00.000Z | blood_pressure | 114           | 114      | 76        |
+| abc634a555bbba7d6d6584171fdfa206ebf6c9a0 | 2020-03-05T00:00:00.000Z | blood_pressure | 111           | 111      | 77        |
+| 0f7b13f3f0512e6546b8d2c0d56e564a2408536a | 2020-03-11T00:00:00.000Z | blood_pressure | 125           | 125      | 78        |
+| abc634a555bbba7d6d6584171fdfa206ebf6c9a0 | 2020-03-01T00:00:00.000Z | blood_pressure | 116           | 116      | 80        |
+| 46d921f1111a1d1ad5dd6eb6e4d0533ab61907c9 | 2020-03-16T00:00:00.000Z | blood_pressure | 137           | 137      | 78        |
+| abc634a555bbba7d6d6584171fdfa206ebf6c9a0 | 2020-03-09T00:00:00.000Z | blood_pressure | 99            | 99       | 68        |
+| abc634a555bbba7d6d6584171fdfa206ebf6c9a0 | 2020-03-17T00:00:00.000Z | blood_pressure | 113           | 113      | 80        |
+| abc634a555bbba7d6d6584171fdfa206ebf6c9a0 | 2020-03-06T00:00:00.000Z | blood_pressure | 123           | 123      | 83        |
+| abc634a555bbba7d6d6584171fdfa206ebf6c9a0 | 2020-03-06T00:00:00.000Z | blood_pressure | 124           | 124      | 83        |
+| abc634a555bbba7d6d6584171fdfa206ebf6c9a0 | 2020-03-06T00:00:00.000Z | blood_pressure | 138           | 138      | 90        |
+| 981197b530b9ec5032abb0ffe4b69dba3649f467 | 2020-03-29T00:00:00.000Z | blood_pressure | 108           | 108      | 65        |
+| 0a3be7bf5f8166b9eb410e4a728cb8db07c9f07f | 2020-03-11T00:00:00.000Z | blood_pressure | 144           | 144      | 79        |
+|...|...|...|...|...|...|
+
+
 + Systolic values are populating both ```measure_value``` and ```systolic``` columns
 
 + Look now for the systolic and diastolic null values
