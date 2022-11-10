@@ -67,6 +67,7 @@ WHERE
   id_rank = 5;
 ```
 
+
 ## RECORD COUNT & DISTINCT VALUES - Exercises
 
 1. Which actor_id has the most number of unique film_id records in the dvd_rentals.film_actor table?
@@ -129,13 +130,35 @@ WHERE
   category = 'Sports';
 ```
 
-..* When you divide an INT data type with another INT data type - the SQL engine automatically returns you the floor division!
-..* So how do we get around this? Simply cast either the top or the bottom of the division terms as a NUMERIC data type and you’re set. The shortened form of casting a column or a value is column_name::<new-data-type> or the long form is CAST(column_name AS <new-data-type>)
++ When you divide an INT data type with another INT data type - the SQL engine automatically returns you the floor division!
++ So how do we get around this? Simply cast either the top or the bottom of the division terms as a NUMERIC data type and you’re set. The shortened form of casting a column or a value is column_name::<new-data-type> or the long form is CAST(column_name AS <new-data-type>)
 
-[**Notes taken from Danny SeriousSQL Course**](https://www.datawithdanny.com/)
+[**Notes taken from Danny's SeriousSQL Course**](https://www.datawithdanny.com/)
 
 
 5. What percentage of unique fid values are in the Children category in the dvd_rentals.film_list table? 
 
 ```sql
+SELECT 
+  category,
+  COUNT (DISTINCT fid) AS unique_fid_per_category,
+  SUM (COUNT (DISTINCT fid)) OVER() AS total_unique_fids ,
+  ROUND (
+    100 * COUNT (DISTINCT fid)::NUMERIC
+    / 
+    SUM (COUNT (DISTINCT fid)) OVER(),
+  2) AS percentage_fid_per_category
+FROM 
+  dvd_rentals.film_list
+GROUP BY 
+  category;
+```
+
+
+## IDENTIFYING DUPLICATE RECORDS - Exercises
+
+1.
+
+```sql
+
 ```
