@@ -112,7 +112,7 @@ LIMIT 10;
 |83|106|
 |76|102|
 
-Use the ```sql WHERE ``` clause to see what happens to the ```sql measure ``` column when ```sql measure_value = 0 ``` and ```sql systolic IS NULL ``` and ```sql diastolic IS NULL ``` 
+Use the ```WHERE``` clause to see what happens to the ```measure``` column when ```measure_value = 0``` and ```systolic IS NULL``` and ```diastolic IS NULL``` 
 
 ```sql
 SELECT
@@ -131,7 +131,7 @@ GROUP BY
 |blood_pressure|562|
 |weight|2|
 
-+ Most of the ```sql measure_value = 0 ``` occur when ```sql measure = 'blood_pressure' ```
++ Most of the ```measure_value = 0``` occur when ```measure = 'blood_pressure'```
 
 ```sql
 SELECT *
@@ -142,7 +142,7 @@ WHERE
   AND measure = 'blood_pressure';
 ```
 
-+ When the blood pressure is measured and the ```sql measure_value = 0 ```, ```sql systolic ``` and ```sql diastolic ``` fields are populated with the valid records. The next question would be **what happened to the records where ```sql measure = 'blood_pressure' ``` but the ```sql measure_value != 0 ```?**
++ When the blood pressure is measured and the ```measure_value = 0```, ```systolic``` and ```diastolic``` fields are populated with the valid records. The next question would be **what happened to the records where ```measure = 'blood_pressure'``` but the ```measure_value != 0```?**
 
 ```sql
 SELECT *
@@ -153,7 +153,7 @@ WHERE
   AND measure = 'blood_pressure';
 ```
 
-+ Systolic values are populating both ```sql measure_value ``` and ```sql systolic ``` columns
++ Systolic values are populating both ```measure_value``` and ```systolic``` columns
 
 + Look now for the systolic and diastolic null values
 
@@ -174,7 +174,7 @@ GROUP BY
 |blood_glucose|25580|
 
 
-+ Most of null values for systolic occur when ```sql measure = 'blood_glucose' ```
++ Most of null values for systolic occur when ```measure = 'blood_glucose'```
 
 
 ```sql
@@ -194,5 +194,5 @@ GROUP BY
 |weight|443|
 |blood_glucose|25580|
 
-+ The same happens when ```sql diastolic IS NULL ```
++ The same happens when ```diastolic IS NULL```
 
