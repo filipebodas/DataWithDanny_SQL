@@ -157,7 +157,37 @@ GROUP BY
 
 ## IDENTIFYING DUPLICATE RECORDS - Exercises
 
-1.
+1. Which id value has the most number of duplicate records in the health.user_logs table?
+
+```sql
+
+```
+
+2. Which log_date value had the most duplicate records after removing the max duplicate id value from question 1?
+
+```sql
+
+```
+
+3. Which measure_value had the most occurences in the health.user_logs value when measure = 'weight'?
+
+```sql
+
+```
+
+4. How many single duplicated rows exist when measure = 'blood_pressure' in the health.user_logs? How about the total number of duplicate records in the same table?
+
+```sql
+
+```
+
+5. What percentage of records measure_value = 0 when measure = 'blood_pressure' in the health.user_logs table? How many records are there also for this same condition?
+
+```sql
+
+```
+
+6. What percentage of records are duplicates in the health.user_logs table?
 
 ```sql
 

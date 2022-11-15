@@ -222,3 +222,89 @@ GROUP BY
 
 + The same happens when ```diastolic IS NULL```
 
+******
+
+## DUPLICATED VALUES ANALYSIS
+
+# DEAL WITH DUPLICATED VALUES
+
+How to deal with duplicated rows:
++ Remove them in a SELECT statement
++ Recreating a “clean” version of our dataset
++ Identify exactly which rows are duplicated for further investigation or
++ Simply ignore the duplicates and leave the dataset alone
+
+**Methods**
+
++ A CTE or Common Table Expression is a SQL query that manipulates existing data and stores the data outputs as a new reference.
+
+´´´sql
+WITH deduped_logs AS (
+  SELECT DISTINCT *
+  FROM health.user_logs
+)
+SELECT COUNT(*)
+FROM deduped_logs;
+´´´
+
++ Temporary Tables
+
+´´´sql
+CREATE TEMP TABLE deduplicated_user_logs AS
+SELECT DISTINCT *
+FROM health.user_logs;
+
+SELECT COUNT(*)
+FROM deduplicated_user_logs;
+´´´
+
+**Will I need to use the deduplicated data later?**
+ + **Yes** - Temporary tables
+ + **No** - CTEs
+
+
+# IDENTIFYING DUPLICATED VALUES
+
+**CTE**
+´´´sql
+WITH groupby_counts AS (
+  SELECT
+    id,
+    log_date,
+    measure,
+    measure_value,
+    systolic,
+    diastolic,
+    COUNT(*) AS frequency
+  FROM health.user_logs
+  GROUP BY
+    id,
+    log_date,
+    measure,
+    measure_value,
+    systolic,
+    diastolic
+)
+SELECT *
+FROM groupby_counts
+WHERE frequency > 1
+ORDER BY frequency DESC
+LIMIT 10;
+´´´
+
+**TEMP TABLE**
+´´´sql
+DROP TABLE IF EXISTS unique_duplicate_records;
+
+CREATE TEMPORARY TABLE unique_duplicate_records AS
+SELECT *
+FROM health.user_logs
+GROUP BY
+  id,
+  log_date,
+  measure,
+  measure_value,
+  systolic,
+  diastolic
+HAVING COUNT(*) > 1;
+´´´
