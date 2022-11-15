@@ -238,25 +238,25 @@ How to deal with duplicated rows:
 
 + A CTE or Common Table Expression is a SQL query that manipulates existing data and stores the data outputs as a new reference.
 
-´´´sql
+```sql
 WITH deduped_logs AS (
   SELECT DISTINCT *
   FROM health.user_logs
 )
 SELECT COUNT(*)
 FROM deduped_logs;
-´´´
+```
 
 + Temporary Tables
 
-´´´sql
+```sql
 CREATE TEMP TABLE deduplicated_user_logs AS
 SELECT DISTINCT *
 FROM health.user_logs;
 
 SELECT COUNT(*)
 FROM deduplicated_user_logs;
-´´´
+```
 
 **Will I need to use the deduplicated data later?**
  + **Yes** - Temporary tables
@@ -266,7 +266,7 @@ FROM deduplicated_user_logs;
 # IDENTIFYING DUPLICATED VALUES
 
 **CTE**
-´´´sql
+```sql
 WITH groupby_counts AS (
   SELECT
     id,
@@ -290,10 +290,10 @@ FROM groupby_counts
 WHERE frequency > 1
 ORDER BY frequency DESC
 LIMIT 10;
-´´´
+```
 
 **TEMP TABLE**
-´´´sql
+```sql
 DROP TABLE IF EXISTS unique_duplicate_records;
 
 CREATE TEMPORARY TABLE unique_duplicate_records AS
@@ -307,4 +307,4 @@ GROUP BY
   systolic,
   diastolic
 HAVING COUNT(*) > 1;
-´´´
+```
