@@ -226,7 +226,7 @@ GROUP BY
 
 ## DUPLICATED VALUES ANALYSIS
 
-# DEAL WITH DUPLICATED VALUES
+### DEAL WITH DUPLICATED VALUES
 
 How to deal with duplicated rows:
 + Remove them in a SELECT statement
@@ -263,7 +263,7 @@ FROM deduplicated_user_logs;
  + **No** - CTEs
 
 
-# IDENTIFYING DUPLICATED VALUES
+### IDENTIFYING DUPLICATED VALUES
 
 **CTE**
 ```sql
