@@ -160,19 +160,114 @@ GROUP BY
 1. Which id value has the most number of duplicate records in the health.user_logs table?
 
 ```sql
-
+WITH log_counts AS (
+/*Use a CTE to see how many times a unique row appears in the dataset*/
+  SELECT 
+    id,
+    log_date,
+    measure,
+    measure_value,
+    systolic,
+    diastolic,
+    COUNT(*) AS frequency
+  FROM 
+    health.user_logs
+  GROUP BY
+    id,
+    log_date,
+    measure,
+    measure_value,
+    systolic,
+    diastolic
+  )
+SELECT 
+  id,
+  SUM (frequency) AS nr_logs
+FROM 
+  log_counts
+WHERE 
+  frequency > 1 
+/*filters the logs that are duplicates before grouped them and sum their frequency*/
+GROUP BY
+  id
+ORDER BY 
+  nr_logs DESC;
 ```
 
 2. Which log_date value had the most duplicate records after removing the max duplicate id value from question 1?
 
 ```sql
-
+WITH log_counts AS (
+--How many times a unique row appears in the dataset
+  SELECT 
+    id,
+    log_date,
+    measure,
+    measure_value,
+    systolic,
+    diastolic,
+    COUNT(*) AS frequency
+  FROM 
+    health.user_logs
+  GROUP BY
+    id,
+    log_date,
+    measure,
+    measure_value,
+    systolic,
+    diastolic
+  ),
+--Retrieve the id with the most number of duplicates
+max_id AS (
+  SELECT 
+    id,
+    SUM (frequency) AS nr_logs
+  FROM 
+    log_counts
+  WHERE 
+    frequency > 1 
+  --filters the logs that are duplicates before grouped them and sum their frequency
+  GROUP BY
+    id
+  ORDER BY 
+    nr_logs DESC
+  LIMIT 1
+  )
+/*
+Aggregate by log_date excluding the id with most duplicated logs
+*/
+SELECT 
+  log_date,
+  SUM (frequency) AS nr_logs
+FROM
+  log_counts
+WHERE 
+  frequency > 1
+  AND id NOT IN (
+              SELECT
+                id
+              FROM max_id
+              )
+GROUP BY 
+  log_date
+ORDER BY
+  nr_logs DESC;
 ```
 
 3. Which measure_value had the most occurences in the health.user_logs value when measure = 'weight'?
 
 ```sql
-
+SELECT
+  measure_value,
+  COUNT (*) AS frequency
+FROM
+  health.user_logs
+WHERE
+  measure = 'weight'
+GROUP BY
+  measure_value
+ORDER BY
+  frequency DESC;
 ```
 
 4. How many single duplicated rows exist when measure = 'blood_pressure' in the health.user_logs? How about the total number of duplicate records in the same table?

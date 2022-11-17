@@ -234,7 +234,23 @@ How to deal with duplicated rows:
 + Identify exactly which rows are duplicated for further investigation or
 + Simply ignore the duplicates and leave the dataset alone
 
-**Methods**
+
+**Dected Duplicate Values**
+
+```sql
+SELECT COUNT(*)
+FROM health.user_logs
+```
++ This will return the total of records in the table. Adding a DISTINCT to the query will tells us how many **unique records** there are.
+
+```sql
+SELECT COUNT(DISTINCT *)
+FROM health.user_logs
+```
+
+Since we are using PostgreSQL, the syntax needs to be a bit different because COUNT(DISTINCT *) does not work.
+
+**Number of unique records with PostgreSQL**
 
 + A CTE or Common Table Expression is a SQL query that manipulates existing data and stores the data outputs as a new reference.
 
@@ -247,9 +263,14 @@ SELECT COUNT(*)
 FROM deduped_logs;
 ```
 
+⋅⋅⋅We retrieve all the unique records with the CTE and them we count how many exist. **Note that this is to identify how many unique records are, not how many times they repeat themselves**.
+
+
 + Temporary Tables
 
 ```sql
+DROP TABLE IF EXISTS deduplicated_user_logs; 
+
 CREATE TEMP TABLE deduplicated_user_logs AS
 SELECT DISTINCT *
 FROM health.user_logs;
@@ -258,12 +279,54 @@ SELECT COUNT(*)
 FROM deduplicated_user_logs;
 ```
 
-**Will I need to use the deduplicated data later?**
+⋅⋅⋅Same principle but using a Temporary Table. Which one to use? **Will I need to use the deduplicated data later?**
  + **Yes** - Temporary tables
  + **No** - CTEs
 
 
+**RESULTS:** 43.891 records and 31.004 unique records
+
+
 ### IDENTIFYING DUPLICATED VALUES
+
+By using a `GROUP BY` with all the columns and a `COUNT` aggregate function we get the same result as the `DISTINCT` statement from earlier plus the frequency for each unique combination.
+
+```sql
+SELECT
+  id,
+  log_date,
+  measure,
+  measure_value,
+  systolic,
+  diastolic,
+  COUNT(*) AS frequency
+FROM health.user_logs
+GROUP BY
+  id,
+  log_date,
+  measure,
+  measure_value,
+  systolic,
+  diastolic
+ORDER BY frequency DESC
+```
+
+Now, to obtain the final table that identifies the duplicate records, we just need to filter the `GROUP BY` with a `HAVING > 1`.
+
+```sql
+SELECT *
+FROM health.user_logs
+GROUP BY
+  id,
+  log_date,
+  measure,
+  measure_value,
+  systolic,
+  diastolic
+HAVING COUNT(*) > 1;
+```
+
++ Now, besides knowing which records are duplicate, we also want to know their **frequency**. We keep the `COUNT` aggregate function and we make use of a **CTE** to filter the rows where the frequency count is bigger than 1.
 
 **CTE**
 ```sql
@@ -290,21 +353,4 @@ FROM groupby_counts
 WHERE frequency > 1
 ORDER BY frequency DESC
 LIMIT 10;
-```
-
-**TEMP TABLE**
-```sql
-DROP TABLE IF EXISTS unique_duplicate_records;
-
-CREATE TEMPORARY TABLE unique_duplicate_records AS
-SELECT *
-FROM health.user_logs
-GROUP BY
-  id,
-  log_date,
-  measure,
-  measure_value,
-  systolic,
-  diastolic
-HAVING COUNT(*) > 1;
 ```
