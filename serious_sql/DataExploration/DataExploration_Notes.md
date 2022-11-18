@@ -336,8 +336,17 @@ GROUP BY
   diastolic
 ORDER BY frequency DESC
 ```
+**TOTAL ROWS: 31.004**
+| id                                       | log_date                 | measure        | measure_value | systolic | diastolic | frequency |
+|------------------------------------------|--------------------------|----------------|---------------|----------|-----------|-----------|
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2019-12-06T00:00:00.000Z | blood_glucose  | 401           |          |           | 104       |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2019-12-05T00:00:00.000Z | blood_glucose  | 401           |          |           | 77        |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2019-12-04T00:00:00.000Z | blood_glucose  | 401           |          |           | 72        |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2019-12-07T00:00:00.000Z | blood_glucose  | 401           |          |           | 70        |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2020-09-30T00:00:00.000Z | blood_glucose  | 401           |          |           | 39        |
 
-Now, to obtain the final table that identifies the duplicate records, we just need to filter the `GROUP BY` with a `HAVING > 1`.
+
+Now, to obtain the final table that has all the duplicate records, we just need to filter the `GROUP BY` with a `HAVING COUNT (*) > 1`. This narrows the records that only have a frequency > 1. 
 
 ```sql
 SELECT *
@@ -352,7 +361,17 @@ GROUP BY
 HAVING COUNT(*) > 1;
 ```
 
-+ Now, besides knowing which records are duplicate, we also want to know their **frequency**. We keep the `COUNT` aggregate function and we make use of a **CTE** to filter the rows where the frequency count is bigger than 1.
+**TOTAL ROWS: 6.562**
+| id                                       | log_date                 | measure        | measure_value | systolic | diastolic |
+|------------------------------------------|--------------------------|----------------|---------------|----------|-----------|
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2020-04-15T00:00:00.000Z | blood_glucose  | 267           |          |           |
+| 0f7b13f3f0512e6546b8d2c0d56e564a2408536a | 2020-08-18T00:00:00.000Z | weight         | 68.49244787   | 0        | 0         |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2020-01-04T00:00:00.000Z | blood_glucose  | 113           |          |           |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2020-01-12T00:00:00.000Z | blood_glucose  | 121           |          |           |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2020-05-11T00:00:00.000Z | blood_glucose  | 76            |          |           |
+
+
+Finally, besides knowing which records are duplicate, we also want to know their **frequency**. We keep the `COUNT` aggregate function and we make use of a **CTE** to filter the rows where the frequency count is bigger than 1.
 
 **CTE**
 ```sql
@@ -380,3 +399,27 @@ WHERE frequency > 1
 ORDER BY frequency DESC
 LIMIT 10;
 ```
+
+**CTE - TOTAL ROWS: 31.004**
+| id                                       | log_date                 | measure        | measure_value | systolic | diastolic | frequency |
+|------------------------------------------|--------------------------|----------------|---------------|----------|-----------|-----------|
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2019-12-06T00:00:00.000Z | blood_glucose  | 401           |          |           | 104       |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2019-12-05T00:00:00.000Z | blood_glucose  | 401           |          |           | 77        |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2019-12-04T00:00:00.000Z | blood_glucose  | 401           |          |           | 72        |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2019-12-07T00:00:00.000Z | blood_glucose  | 401           |          |           | 70        |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2020-09-30T00:00:00.000Z | blood_glucose  | 401           |          |           | 39        |
+
+**```SELECT *```**
+
+| id                                       | log_date                 | measure       | measure_value | systolic | diastolic | frequency |
+|------------------------------------------|--------------------------|---------------|---------------|----------|-----------|-----------|
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2019-12-06T00:00:00.000Z | blood_glucose | 401           |          |           | 104       |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2019-12-05T00:00:00.000Z | blood_glucose | 401           |          |           | 77        |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2019-12-04T00:00:00.000Z | blood_glucose | 401           |          |           | 72        |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2019-12-07T00:00:00.000Z | blood_glucose | 401           |          |           | 70        |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2020-09-30T00:00:00.000Z | blood_glucose | 401           |          |           | 39        |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2020-09-29T00:00:00.000Z | blood_glucose | 401           |          |           | 24        |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2020-10-02T00:00:00.000Z | blood_glucose | 401           |          |           | 18        |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2019-12-10T00:00:00.000Z | blood_glucose | 140           |          |           | 12        |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2019-12-11T00:00:00.000Z | blood_glucose | 220           |          |           | 12        |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2020-04-15T00:00:00.000Z | blood_glucose | 236           |          |           | 12        |
