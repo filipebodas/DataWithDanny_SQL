@@ -12,6 +12,14 @@ ORDER BY
   category_id DESC;
 ```
 
+| name | category|
+|---|---|
+|Travel|16|
+|Sports|15|
+|Sci-Fi|14|
+|...|...|
+
+
 2. For the films with the longest length, what is the title of the “R” rated film with the lowest replacement_cost in dvd_rentals.film table?
 
 ```sql
@@ -30,6 +38,11 @@ ORDER BY
 LIMIT 1;
 ```
 
+| title | rating| length | replacement_cost
+|---|---|---|---|
+| HOME PITY | R | 185 | 15.99 |
+
+
 3. Who was the manager of the store with the highest total_sales in the dvd_rentals.sales_by_store table?
 
 ```sql
@@ -43,17 +56,19 @@ ORDER BY
 LIMIT 1;
 ```
 
+| manager | total_sales |
+|---|---|
+| Jon Stephens | 33726.77 |
+
+
 4. What is the postal_code of the city with the 5th highest city_id in the dvd_rentals.address table?
 
 ```sql
 WITH city_rank AS (
-  SELECT
+    SELECT
     postal_code,
     city_id,
-    DENSE_RANK() OVER(
-      ORDER BY
-        city_id DESC
-    ) id_rank
+    DENSE_RANK() OVER( ORDER BY city_id DESC) id_rank
   FROM
     dvd_rentals.address
 )
@@ -66,6 +81,24 @@ FROM
 WHERE
   id_rank = 5;
 ```
+
+**CTE - city_rank**
+| postal_code | city_id | id_rank |
+|-------------|---------|---------|
+| 75559       | 600     | 1       |
+| 39976       | 599     | 2       |
+| 95093       | 598     | 3       |
+| 40792       | 597     | 4       |
+| ...         | ...     | ...     |
+
+
+**FINAL SELECT**
+| postal_code | city_id | id_rank |
+|-------------|---------|---------|
+| 31390       | 596     | 5       |
+
+
+******
 
 
 ## RECORD COUNT & DISTINCT VALUES - Exercises
@@ -85,6 +118,11 @@ ORDER BY
 LIMIT 1;
 ```
 
+| actor_id | nr_films |
+|----------|----------|
+| 107      | 42       |
+
+
 2. How many distinct fid values are there for the 3rd most common price value in the dvd_rentals.nicer_but_slower_film_list table?
 
 ```sql
@@ -99,6 +137,13 @@ ORDER BY
   2 DESC;
 ```
 
+| price | nr_fid |
+|-------|--------|
+| 0.99  | 340    |
+| 4.99  | 334    |
+| 2.99  | 323    | 
+
+
 3. How many unique country_id values exist in the dvd_rentals.city table?
 
 ```sql
@@ -107,6 +152,11 @@ SELECT
 FROM
   dvd_rentals.city;
 ```
+
+| unique_country_ids |
+|--------------------|
+| 109                |
+
 
 4. What percentage of overall total_sales does the Sports category make up in the dvd_rentals.sales_by_film_category table?
 
@@ -129,6 +179,32 @@ FROM
 WHERE
   category = 'Sports';
 ```
+
+**CTE - sales_perc**
+| category    | sales_percentage |
+|-------------|------------------|
+| Sports      | 7.88             |
+| Sci-Fi      | 7.06             |
+| Animation   | 6.91             |
+| Drama       | 6.80             |
+| Comedy      | 6.50             |
+| Action      | 6.49             |
+| New         | 6.46             |
+| Games       | 6.35             |
+| Foreign     | 6.33             |
+| Family      | 6.28             |
+| Documentary | 6.26             |
+| Horror      | 5.52             |
+| Children    | 5.42             |
+| Classics    | 5.40             |
+| Travel      | 5.27             |
+| Music       | 5.07             |
+
+**FINAL SELECT**
+| category    | sales_percentage |
+|-------------|------------------|
+| Sports      | 7.88             |
+
 
 + When you divide an INT data type with another INT data type - the SQL engine automatically returns you the floor division!
 + So how do we get around this? Simply cast either the top or the bottom of the division terms as a NUMERIC data type and you’re set. The shortened form of casting a column or a value is column_name::<new-data-type> or the long form is CAST(column_name AS <new-data-type>)
@@ -153,6 +229,28 @@ FROM
 GROUP BY 
   category;
 ```
+
+| category    | unique_fid_per_category | total_unique_fids | percentage_fid_per_category |
+|-------------|-------------------------|-------------------|-----------------------------|
+| Action      | 64                      | 997               | 6.42                        |
+| Animation   | 66                      | 997               | 6.62                        |
+| Children    | 60                      | 997               | 6.02                        |
+| Classics    | 57                      | 997               | 5.72                        |
+| Comedy      | 58                      | 997               | 5.82                        |
+| Documentary | 68                      | 997               | 6.82                        |
+| Drama       | 61                      | 997               | 6.12                        |
+| Family      | 69                      | 997               | 6.92                        |
+| Foreign     | 73                      | 997               | 7.32                        |
+| Games       | 61                      | 997               | 6.12                        |
+| Horror      | 56                      | 997               | 5.62                        |
+| Music       | 51                      | 997               | 5.12                        |
+| New         | 63                      | 997               | 6.32                        |
+| Sci-Fi      | 61                      | 997               | 6.12                        |
+| Sports      | 73                      | 997               | 7.32                        |
+| Travel      | 56                      | 997               | 5.62                        |
+
+
+******
 
 
 ## IDENTIFYING DUPLICATE RECORDS - Exercises
