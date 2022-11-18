@@ -160,7 +160,7 @@ GROUP BY
 1. Which id value has the most number of duplicate records in the health.user_logs table?
 
 ```sql
-WITH log_counts AS (
+WITH logs_counts AS (
 /*Use a CTE to see how many times a unique row appears in the dataset*/
   SELECT 
     id,
@@ -184,7 +184,7 @@ SELECT
   id,
   SUM (frequency) AS nr_logs
 FROM 
-  log_counts
+  logs_counts
 WHERE 
   frequency > 1 
 /*filters the logs that are duplicates before grouped them and sum their frequency*/
@@ -197,7 +197,7 @@ ORDER BY
 2. Which log_date value had the most duplicate records after removing the max duplicate id value from question 1?
 
 ```sql
-WITH log_counts AS (
+WITH logs_counts AS (
 --How many times a unique row appears in the dataset
   SELECT 
     id,
@@ -223,7 +223,7 @@ max_id AS (
     id,
     SUM (frequency) AS nr_logs
   FROM 
-    log_counts
+    logs_counts
   WHERE 
     frequency > 1 
   --filters the logs that are duplicates before grouped them and sum their frequency
@@ -240,7 +240,7 @@ SELECT
   log_date,
   SUM (frequency) AS nr_logs
 FROM
-  log_counts
+  logs_counts
 WHERE 
   frequency > 1
   AND id NOT IN (
@@ -273,17 +273,142 @@ ORDER BY
 4. How many single duplicated rows exist when measure = 'blood_pressure' in the health.user_logs? How about the total number of duplicate records in the same table?
 
 ```sql
-
+WITH logs_counts AS (
+  SELECT
+    id,
+    log_date,
+    measure,
+    measure_value,
+    systolic,
+    diastolic,
+    COUNT(*) AS frequency
+  FROM 
+    health.user_logs
+  WHERE 
+    measure = 'blood_pressure'
+  GROUP BY
+    id,
+    log_date,
+    measure,
+    measure_value,
+    systolic,
+    diastolic
+)
+SELECT 
+  COUNT (*) AS unique_records,
+  SUM (frequency) AS total_duplicated_records
+FROM 
+  logs_counts
+WHERE 
+  frequency > 1;
 ```
 
 5. What percentage of records measure_value = 0 when measure = 'blood_pressure' in the health.user_logs table? How many records are there also for this same condition?
 
 ```sql
-
+SELECT
+  measure_value,
+  COUNT (*) AS frequency,
+  SUM (COUNT (*)) OVER() AS total_frequency,
+  ROUND (
+    100 * COUNT (*)::NUMERIC / 
+    SUM (COUNT (*)) OVER(),
+    2) AS percentage
+FROM
+  health.user_logs
+WHERE
+  measure = 'blood_pressure'
+GROUP BY
+  measure_value
+ORDER BY 
+  frequency DESC;
 ```
+
+**OR**
+
+```sql
+WITH frequency_table AS (
+  SELECT
+    measure_value,
+    COUNT (*) AS frequency,
+    SUM (COUNT (*)) OVER() AS total_frequency
+  FROM
+    health.user_logs
+  WHERE
+    measure = 'blood_pressure'
+  GROUP BY
+    measure_value
+  )
+SELECT 
+  measure_value,
+  frequency,
+  total_frequency,
+  ROUND (
+    100 * frequency::NUMERIC /
+    total_frequency,
+    2) AS percentage
+FROM
+  frequency_table
+WHERE
+  measure_value = 0;
+```
+
+
 
 6. What percentage of records are duplicates in the health.user_logs table?
 
 ```sql
+WITH logs_counts AS (
+  SELECT
+    id,
+    measure,
+    measure_value,
+    log_date,
+    diastolic,
+    systolic,
+    COUNT (*) AS frequency
+  FROM
+    health.user_logs
+  GROUP BY
+    id,
+    measure,
+    measure_value,
+    log_date,
+    diastolic,
+    systolic
+  )
+SELECT 
+  SUM (CASE
+    WHEN frequency > 1 THEN frequency - 1 -- this counts which ones are in fact duplicates
+    ELSE 0 -- it is a unique log
+      END) AS number_of_duplicates,
+  SUM (frequency) as total_logs,
+  ROUND (
+    100 * SUM (CASE
+            WHEN frequency > 1 THEN frequency - 1 -- this counts which ones are in fact duplicates
+            ELSE 0 -- it is a unique log
+              END)::NUMERIC /
+          SUM (frequency),
+    2
+  ) AS duplicates_percentage
+FROM 
+  logs_counts;
+```
 
+**OR**
+
+```sql
+WITH deduped_logs AS (
+  SELECT DISTINCT *
+  FROM health.user_logs
+)
+SELECT
+  ROUND(
+    100 * (
+      (SELECT COUNT(*) FROM health.user_logs) -
+      (SELECT COUNT(*) FROM deduped_logs)
+    )::NUMERIC /
+    (SELECT COUNT(*) FROM health.user_logs),
+    2
+  ) AS duplicate_percentage;
 ```

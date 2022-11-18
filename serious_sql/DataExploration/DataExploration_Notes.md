@@ -1,4 +1,8 @@
-## NULL VALUES ANALYSIS
+## RECORD COUNTS AND NULL VALUES ANALYSIS
+
+Common analysis 
+  + **total number of records**
+  + **total unique ids**
 
 ```sql
 SELECT
@@ -7,12 +11,16 @@ SELECT
 FROM
   health.user_logs;
 ```
-|count_rows|unique_ids|
+|count_records|unique_ids|
 |---|---|
 |43891|554|
 
 
-**Check the frequency for individual columns: measure, measure_value, systolic and diastolic**
+**Check the frequency for individual columns; total frequency and percentage:** 
++ measure
++ measure_value
++ systolic
++ diastolic
 
 ```sql
 SELECT
@@ -241,7 +249,11 @@ How to deal with duplicated rows:
 SELECT COUNT(*)
 FROM health.user_logs
 ```
-+ This will return the total of records in the table. Adding a DISTINCT to the query will tells us how many **unique records** there are.
+| count  |
+|--------|
+| 43891  |
+
++ This returns the total number of records in the table. Adding a DISTINCT to the query will tells us how many **unique records** exist.
 
 ```sql
 SELECT COUNT(DISTINCT *)
@@ -263,7 +275,21 @@ SELECT COUNT(*)
 FROM deduped_logs;
 ```
 
-⋅⋅⋅We retrieve all the unique records with the CTE and them we count how many exist. **Note that this is to identify how many unique records are, not how many times they repeat themselves**.
+**```SELECT DISTINCT *```**
+| id                                       | log_date                 | measure        | measure_value | systolic | diastolic |
+|------------------------------------------|--------------------------|----------------|---------------|----------|-----------|
+| 576fdb528e5004f733912fae3020e7d322dbc31a | 2019-12-15T00:00:00.000Z | blood_pressure | 0             | 124      | 72        |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2020-04-15T00:00:00.000Z | blood_glucose  | 267           |          |           |
+| 8b130a2836a80239b4d1e3677302709cea70a911 | 2019-12-31T00:00:00.000Z | blood_glucose  | 109.799995    |          |           |
+| 054250c692e07a9fa9e62e345231df4b54ff435d | 2020-05-07T00:00:00.000Z | blood_glucose  | 189           |          |           |
+| 0f7b13f3f0512e6546b8d2c0d56e564a2408536a | 2020-08-18T00:00:00.000Z | weight         | 68.49244787   | 0        | 0         |
+
+**```SELECT COUNT(*)```**
+| count  |
+|--------|
+| 31004  |
+
+We retrieve all the unique records with the CTE and them we count how many exist. **Note that this is to identify how many unique records are, not how many times they repeat themselves**.
 
 
 + Temporary Tables
@@ -279,7 +305,7 @@ SELECT COUNT(*)
 FROM deduplicated_user_logs;
 ```
 
-⋅⋅⋅Same principle but using a Temporary Table. Which one to use? **Will I need to use the deduplicated data later?**
+Same principle but using a Temporary Table. Which one to use? **Will I need to use the deduplicated data later?**
  + **Yes** - Temporary tables
  + **No** - CTEs
 
