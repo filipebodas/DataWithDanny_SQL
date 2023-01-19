@@ -258,8 +258,9 @@ GROUP BY
 1. Which id value has the most number of duplicate records in the health.user_logs table?
 
 ```sql
+/*create a CTE to get how many duplicates we have. This way we can associate an id with the frequency*/
+
 WITH logs_counts AS (
-/*Use a CTE to see how many times a unique row appears in the dataset*/
   SELECT 
     id,
     log_date,
@@ -267,7 +268,7 @@ WITH logs_counts AS (
     measure_value,
     systolic,
     diastolic,
-    COUNT(*) AS frequency
+    COUNT(*) as frequency
   FROM 
     health.user_logs
   GROUP BY
@@ -276,27 +277,27 @@ WITH logs_counts AS (
     measure,
     measure_value,
     systolic,
-    diastolic
-  )
+    diastolic)
+
+/*Now we just need to sum the frequency per each id and order the results*/
+
 SELECT 
   id,
-  SUM (frequency) AS nr_logs
-FROM 
+  SUM(frequency) as nr_logs
+FROM
   logs_counts
-WHERE 
-  frequency > 1 
-/*filters the logs that are duplicates before grouped them and sum their frequency*/
-GROUP BY
+WHERE
+  frequency > 1
+GROUP BY 
   id
 ORDER BY 
-  nr_logs DESC;
+  nr_logs desc; 
 ```
 
 2. Which log_date value had the most duplicate records after removing the max duplicate id value from question 1?
 
 ```sql
 WITH logs_counts AS (
---How many times a unique row appears in the dataset
   SELECT 
     id,
     log_date,
@@ -304,7 +305,7 @@ WITH logs_counts AS (
     measure_value,
     systolic,
     diastolic,
-    COUNT(*) AS frequency
+    COUNT(*) as frequency
   FROM 
     health.user_logs
   GROUP BY
@@ -315,7 +316,9 @@ WITH logs_counts AS (
     systolic,
     diastolic
   ),
---Retrieve the id with the most number of duplicates
+
+/* Create another CTE to retrieve the id with the highest frequency */
+
 max_id AS (
   SELECT 
     id,
@@ -323,17 +326,16 @@ max_id AS (
   FROM 
     logs_counts
   WHERE 
-    frequency > 1 
-  --filters the logs that are duplicates before grouped them and sum their frequency
+    frequency > 1
   GROUP BY
     id
   ORDER BY 
     nr_logs DESC
   LIMIT 1
   )
-/*
-Aggregate by log_date excluding the id with most duplicated logs
-*/
+
+/* Finally, we sum the frequencies by log_date and exclude the id founded in the previous CTE  */
+
 SELECT 
   log_date,
   SUM (frequency) AS nr_logs
@@ -509,4 +511,85 @@ SELECT
     (SELECT COUNT(*) FROM health.user_logs),
     2
   ) AS duplicate_percentage;
+```
+
+
+******
+
+
+## SUMMARY STATISTICS - Exercises
+
+1. What is the average, median and mode values of blood glucose values to 2 decimal places?
+
+```sql
+SELECT
+  measure,
+  ROUND (AVG(measure_value), 2) as mean,
+  ROUND (
+    CAST (
+      PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY measure_value ASC) AS NUMERIC),
+    2) AS median,
+  ROUND (
+    MODE () WITHIN GROUP (ORDER BY measure_value ASC),
+  2) AS mode
+FROM
+  health.user_logs
+WHERE
+  measure = 'blood_glucose'
+GROUP BY
+  measure;
+```
+
+| measure | mean | median | mode |
+|---|---|---|---|
+| blood_glucose | 177.35 | 154.00 | 401.00 |
+
+
+2. What is the most frequently occuring `measure_value` value for all blood glucose measurements?
+
+```sql
+SELECT
+  measure_value,
+  COUNT(*) AS frequency
+FROM
+  health.user_logs
+WHERE
+  measure = 'blood_glucose'
+GROUP BY
+  measure_value
+ORDER BY 
+  frequency DESC
+LIMIT 5;
+```
+
+3. Calculate the 2 Pearson Coefficient of Skewness for blood glucose measures given the following formulas:
+
++ **Coefficient1:** ModeSkewness = (Mean − Mode) / StandardDeviation
+
++ **Coefficient2:** MedianSkewness = 3 ∗ ( (Mean − Median) / StandardDeviation)
+
+```sql
+WITH stats AS (
+SELECT
+  ROUND (
+    AVG (measure_value),
+    2) AS mean,
+  MODE () WITHIN GROUP (ORDER BY measure_value ASC) AS mode,
+  ROUND (
+    STDDEV (measure_value),
+    2) AS standard_deviation,
+  ROUND (
+    CAST (
+      PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY measure_value ASC) AS NUMERIC),
+      2 ) AS median
+FROM
+  health.user_logs
+WHERE
+  measure = 'blood_glucose'
+)
+SELECT
+  (mean - mode) / standard_deviation AS coef_1,
+  3 * ( (mean - median) / standard_deviation ) AS coef_2
+FROM
+  stats;
 ```

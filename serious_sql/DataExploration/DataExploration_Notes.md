@@ -423,3 +423,122 @@ LIMIT 10;
 | 054250c692e07a9fa9e62e345231df4b54ff435d | 2019-12-10T00:00:00.000Z | blood_glucose | 140           |          |           | 12        |
 | 054250c692e07a9fa9e62e345231df4b54ff435d | 2019-12-11T00:00:00.000Z | blood_glucose | 220           |          |           | 12        |
 | 054250c692e07a9fa9e62e345231df4b54ff435d | 2020-04-15T00:00:00.000Z | blood_glucose | 236           |          |           | 12        |
+
+
+******
+
+## SUMMARY STATISTICS ANALYSIS
+
+### Arithmetic Mean or Average
+
+```sql
+SELECT
+  measure,
+  COUNT(*) as frequency,
+  ROUND(
+    SUM (measure_value),
+    2) AS sum_total,
+  ROUND(
+    AVG (measure_value),
+    2) AS average
+FROM
+  health.user_logs
+GROUP BY
+  measure;
+```
+
+The average of the `weight` measure is out of the ordinary. 
+
+
+### Median & Mode
+
+Look other central statistics when `measure = weight`.
+
+```sql
+SELECT
+  PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY measure_value) AS median_value,
+  MODE() WITHIN GROUP (ORDER BY measure_value) AS mode_value,
+  AVG(measure_value) as mean_value
+FROM health.user_logs
+WHERE measure = 'weight';
+```
+
+The `WITHIN GROUP` allows to sort rows ang group them making use of an aggregate function. In the example above, we use both `PERCENTILE_CONT` and the `MODE`. 
+We make use of the `ORDER BY` clause to specify the column on which to sort the grouped rows.
+
+
+### Min, Max & Range
+
+```sql
+EXPLAIN ANALYZE
+SELECT
+  MIN(measure_value) AS minimum_value,
+  MAX(measure_value) AS maximum_value,
+  MAX(measure_value) - MIN(measure_value) AS range_value
+FROM health.user_logs
+WHERE measure = 'weight';
+```
+**Execution Time:** 15.913 ms
+
+The query below will have a better performance because:
+- It is calculating the `MIN` and `MAX` just one time
+- Reduce the number down from the total size of the health.user_logs down to just 2 numbers
+
+```sql
+EXPLAIN ANALYZE
+WITH min_max_values AS (
+  SELECT
+    MIN(measure_value) AS minimum_value,
+    MAX(measure_value) AS maximum_value
+  FROM health.user_logs
+  WHERE measure = 'weight'
+)
+SELECT
+  minimum_value,
+  maximum_value,
+  maximum_value - minimum_value AS range_value
+FROM min_max_values;
+```
+**Execution Time:** 13.388 ms
+
+
+### Variance & Standard Deviation
+
+The standard deviation and the variance explain how the data is spread around the mean.
+
+An increase in standard deviation value sees a subsequent “spread”. This is exactly what we’d expect when we apply the same standard deviation metrics to our data - even though they might not be normal distributions!
+
+```sql
+SELECT 
+  'weight' AS measure,
+  ROUND( MIN(measure_value), 2) AS min_value,
+  ROUND( MAX(measure_value), 2) AS max_value,
+  ROUND( AVG(measure_value), 2) AS average,
+  ROUND(
+    CAST( PERCENTILE_CONT(0.5) WITHIN GROUP(ORDER BY measure_value ASC) AS NUMERIC),
+    2) AS median,
+  ROUND( 
+    MODE() WITHIN GROUP (ORDER BY measure_value ASC),
+    2) AS mode,
+  ROUND( VARIANCE(measure_value), 2) AS variance,
+  ROUND( STDDEV(measure_value), 2) AS standard_deviation
+FROM
+  health.user_logs
+WHERE
+  measure = 'weight';
+```
+
+If the data follows a normal distribution, there are general boundaries about how much percentage of the total lies between different ranges related to our standard deviation values.
+
+|Percentage of Values	|Range of Values
+|---|---|
+|68% |	μ±σ |
+|95% |	μ±2×σ |
+|99.7% |	μ±3×σ |
+
+If:
++ Mode < Median < Mean - Distribution is **Positive Skew or Left Skew**
+
++ Mode = Median = Mean - Symmetrical Distribution
+
++ Mode > Median > Mean - Distribution is **Negative Skew or Right Skew**
