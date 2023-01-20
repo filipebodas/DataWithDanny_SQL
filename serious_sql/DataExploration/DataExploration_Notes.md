@@ -574,7 +574,7 @@ WITH percentile_values AS (
 SELECT
   percentile,
   MIN(measure_value) AS floor,
-  MAX(measure_value) AS celling,
+  MAX(measure_value) AS ceiling,
   COUNT(*) AS percentile_counts
 FROM 
   percentile_values
@@ -644,10 +644,13 @@ WHERE
   percentile = 1
 ORDER BY
   measure_value ASC;
+```
 
 The values 0 are weird but the other ones above 1.5 kg are valid because they can be referring to babies.
 
 Now, to clean the dataset one approach can be to simply remove the outliers and recalculate the summary statistics again.
+
+We are going to need this data again, that is why we are going to create a temporary table and not a CTE.
 
 ```sql
 DROP TABLE IF EXISTS clean_weight_logs;
@@ -663,9 +666,18 @@ CREATE TEMP TABLE clean_weight_logs AS (
 );
 
 SELECT
-  MIN(measure_value) AS min_value,
-  MAX(measure_value)AS max_value,
-  AVG(measure_value) AS mean,
+  ROUND (
+    MIN(measure_value),
+    2
+  ) AS min_value,
+  ROUND (
+    MAX(measure_value),
+    2
+  ) AS max_value,
+  ROUND (
+    AVG(measure_value),
+    2
+  ) AS mean,
   ROUND (
     CAST (PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY measure_value) AS NUMERIC),
     2
@@ -685,3 +697,254 @@ SELECT
 FROM 
   clean_weight_logs;
 ```
+
+| min_value | max_value | mean | median | mode | standard_deviation | variance |
+|---|---|---|---|---|---|---|
+| 1.81 | 200.49 | 80.76 | 75.98 | 68.49 | 26.91 | 724.29 |
+
+The new CDF will be
+
+```sql
+WITH clean_percentile AS (
+  SELECT 
+    measure_value,
+    NTILE(100) OVER (ORDER BY measure_value) AS percentile
+  FROM 
+    clean_weight_logs
+)
+SELECT 
+  percentile,
+  MIN (measure_value) AS floor,
+  MAX (measure_value) AS ceiling,
+  COUNT (*) AS percentile_counts
+FROM 
+  clean_percentile
+GROUP BY
+  percentile
+ORDER BY 
+  percentile;
+```
+
+SQL also allows to create buckets to divide how variables. First, find the min and max values to create the buckets. They decide which column you are going to use, the min and max values, and the number of buckets.
+
+```sql
+SELECT
+  min (measure_value),
+  max (measure_value)
+FROM clean_weight_logs;
+
+SELECT
+  WIDTH_BUCKET (measure_value, 0, 200, 50) AS bucket,
+  AVG (measure_value) AS mean_measure_value,
+  COUNT (*) AS frequency
+FROM 
+  clean_weight_logs
+GROUP BY
+  bucket
+ORDER BY
+  bucket;
+```
+
+******
+
+## SUMMARY
+
+> **INSPECT ROW COUNTS**
+
+```sql
+SELECT
+  COUNT(*) AS row_count
+FROM 
+  health.user_logs;
+```
+
+
+> **DUPLICATES & ROW FREQUENCY**
+
+```sql
+SELECT
+  id,
+  log_date,
+  measure,
+  measure_value,
+  systolic,
+  diastolic,
+  COUNT(*) AS frequency
+FROM 
+  health.user_logs
+GROUP BY
+  id,
+  log_date,
+  measure,
+  measure_value,
+  systolic,
+  diastolic
+```
+
+
+> **SINGLE COLUMN FREQUENCY**
+
+```sql
+SELECT
+  measure,
+  COUNT(*) AS frequency,
+  ROUND(
+    100 * COUNT(*) / SUM(COUNT(*)) OVER (),
+    2
+  ) AS percentage
+FROM 
+  health.user_logs
+GROUP BY 
+  measure
+ORDER BY 
+  frequency DESC;
+```
+
+
+> **SUMMARY STATISTICS**
+
+```sql
+SELECT
+  'weight' AS measure,
+  ROUND(MIN(measure_value), 2) AS minimum_value,
+  ROUND(MAX(measure_value), 2) AS maximum_value,
+  ROUND(AVG(measure_value), 2) AS mean_value,
+  ROUND(
+    -- this function actually returns a float which is incompatible with ROUND!
+    -- we use this cast function to convert the output type to NUMERIC
+    CAST(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY measure_value) AS NUMERIC),
+    2
+  ) AS median_value,
+  ROUND(
+    MODE() WITHIN GROUP (ORDER BY measure_value),
+    2
+  ) AS mode_value,
+  ROUND(STDDEV(measure_value), 2) AS standard_deviation,
+  ROUND(VARIANCE(measure_value), 2) AS variance_value
+FROM 
+  health.user_logs
+WHERE 
+  measure = 'weight';
+```
+
+
+> **CUMULATIVE DISTRIBUTIONS**
+
+```sql
+WITH percentile_values AS (
+  SELECT
+    measure_value,
+    NTILE(100) OVER (
+      ORDER BY
+        measure_value
+    ) AS percentile
+  FROM 
+    health.user_logs
+  WHERE 
+    measure = 'weight'
+)
+SELECT
+  percentile,
+  MIN(measure_value) AS floor_value,
+  MAX(measure_value) AS ceiling_value,
+  COUNT(*) AS percentile_counts
+FROM 
+  percentile_values
+GROUP BY 
+  percentile
+ORDER BY 
+  percentile;
+```
+
+
+
+> **OUTLIERS**
+
++ Large Outilers
+```sql
+WITH percentile_values AS (
+  SELECT
+    measure_value,
+    NTILE(100) OVER (
+      ORDER BY
+        measure_value
+    ) AS percentile
+  FROM 
+    health.user_logs
+  WHERE 
+    measure = 'weight'
+)
+SELECT
+  measure_value,
+  ROW_NUMBER() OVER (ORDER BY measure_value DESC) as row_number_order,
+  RANK() OVER (ORDER BY measure_value DESC) as rank_order,
+  DENSE_RANK() OVER (ORDER BY measure_value DESC) as dense_rank_order
+FROM 
+  percentile_values
+WHERE 
+  percentile = 100
+ORDER BY 
+  measure_value DESC;
+```
+
++ Small Outilers
+```sql
+WITH percentile_values AS (
+  SELECT
+    measure_value,
+    NTILE(100) OVER (
+      ORDER BY
+        measure_value
+    ) AS percentile
+  FROM 
+    health.user_logs
+  WHERE 
+    measure = 'weight'
+)
+SELECT
+  measure_value,
+  ROW_NUMBER() OVER (ORDER BY measure_value DESC) as row_number_order,
+  RANK() OVER (ORDER BY measure_value DESC) as rank_order,
+  DENSE_RANK() OVER (ORDER BY measure_value DESC) as dense_rank_order
+FROM 
+  percentile_values
+WHERE 
+  percentile = 1
+ORDER BY 
+  measure_value ASC;
+```
+
++ Remove Outliers
+```sql
+DROP TABLE IF EXISTS clean_weight_logs;
+
+CREATE TEMP TABLE clean_weight_logs AS (
+  SELECT *
+  FROM 
+    health.user_logs
+  WHERE 
+    measure = 'weight'
+    AND measure_value > 0
+    AND measure_value < 201
+);
+```
+
+
+> **FREQUENCY DISTRIBUTION**
+
+```sql
+SELECT
+  WIDTH_BUCKET(measure_value, 0, 200, 50) AS bucket,
+  AVG(measure_value) AS measure_value,
+  COUNT(*) AS frequency
+FROM 
+  health.user_logs
+WHERE 
+  measure = 'weight'
+GROUP BY 
+  bucket
+ORDER BY 
+  bucket;
+```
+
+
