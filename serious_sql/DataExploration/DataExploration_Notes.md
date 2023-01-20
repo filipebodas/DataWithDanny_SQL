@@ -508,6 +508,22 @@ The standard deviation and the variance explain how the data is spread around th
 
 An increase in standard deviation value sees a subsequent “spread”. This is exactly what we’d expect when we apply the same standard deviation metrics to our data - even though they might not be normal distributions!
 
+If the data follows a normal distribution, there are general boundaries about how much percentage of the total lies between different ranges related to our standard deviation values.
+
+|Percentage of Values	|Range of Values
+|---|---|
+|68% |	μ±σ |
+|95% |	μ±2×σ |
+|99.7% |	μ±3×σ |
+
+If:
++ Mode < Median < Mean - Distribution is **Positive Skew or Left Skew**
+
++ Mode = Median = Mean - Symmetrical Distribution
+
++ Mode > Median > Mean - Distribution is **Negative Skew or Right Skew**
+
+
 ```sql
 SELECT 
   'weight' AS measure,
@@ -528,17 +544,105 @@ WHERE
   measure = 'weight';
 ```
 
-If the data follows a normal distribution, there are general boundaries about how much percentage of the total lies between different ranges related to our standard deviation values.
+| measure | min_value | max_value | average | median | mode | variance | standard_deviation |
+|---|---|---|---|---|---|---|---|
+| weight | 0.00 | 39642120.00 | 28786.85 | 75.98 | 68.49 | 1129457862383.41 | 1062759.55 |
 
-|Percentage of Values	|Range of Values
-|---|---|
-|68% |	μ±σ |
-|95% |	μ±2×σ |
-|99.7% |	μ±3×σ |
+Notes:
++ The min and max values do not make much sense
++ The median value is at 76kg but the average is at 28787kg
++ The std is too large, with a value at 1062760kg
 
-If:
-+ Mode < Median < Mean - Distribution is **Positive Skew or Left Skew**
+> What to do? **CUMULATIVE DISTRIBUTION FUNCTIONS**
 
-+ Mode = Median = Mean - Symmetrical Distribution
+******
 
-+ Mode > Median > Mean - Distribution is **Negative Skew or Right Skew**
+## CUMULATIVE DISTRIBUTION
+
+A CDF takes a value and returns the percentile. The same as saying what is the probability of any value between the min_value and the value that the function took.
+
+```sql
+WITH percentile_values AS (
+  SELECT
+    measure_value,
+    NTILE(100) OVER( ORDER BY measure_value) AS percentile
+  FROM
+    health.user_logs
+  WHERE
+    measure = 'weight'
+)
+SELECT
+  percentile,
+  MIN(measure_value) AS floor,
+  MAX(measure_value) AS celling,
+  COUNT(*) AS percentile_counts
+FROM 
+  percentile_values
+GROUP BY 
+  percentile
+ORDER BY
+  percentile ASC;
+```
+
+Looking at the 1 percentile and at the 100 percentile, we see that
++ There are 28 records between 0kg and 29kg
+    + Values around 29kg could make sense if they are refering to children;
+    + There could be incorrected measures replace by 0;
++ There are 27 records between 137kg and 39642120kg (which is absurd)
+
+Use WINDON FUNCTIONS `ROW_NUMBER`, `RANK` and `DENSE_RANK` to sort the values of the `measure_value` column.
+
++ **ROW_NUMBER** orders the rows incrementally with the top row begining at 1 and so on
++ **RANK** assigns the rows in groups and the next number is equal to the total of rows already assigned + 1
++ **DENSE_RANK** keeps the rows in buckets that are ordered sequentially. 
+
+> 100th Percentile
+```sql
+WITH percentile_values AS (
+  SELECT
+    measure_value,
+    NTILE(100) OVER( ORDER BY measure_value) AS percentile
+  FROM
+    health.user_logs
+  WHERE
+    measure = 'weight'
+)
+SELECT
+  measure_value,
+  ROW_NUMBER() OVER (ORDER BY measure_value DESC) AS row_number_order,
+  RANK() OVER (ORDER BY measure_value DESC) AS rank_order,
+  DENSE_RANK() OVER (ORDER BY measure_value DESC) AS dense_rank_order
+FROM
+  percentile_values
+WHERE
+  percentile = 100
+ORDER BY
+  measure_value DESC;
+```
+
+3 values are out of the ordinary: 39642120, 39642120 and 576484. The next one, 200.49 although it is a huge value it is acceptable.
+
+> 1th Percentile
+```sql
+WITH percentile_values AS (
+  SELECT
+    measure_value,
+    NTILE(100) OVER( ORDER BY measure_value) AS percentile
+  FROM
+    health.user_logs
+  WHERE
+    measure = 'weight'
+)
+SELECT
+  measure_value,
+  ROW_NUMBER() OVER (ORDER BY measure_value DESC) AS row_number_order,
+  RANK() OVER (ORDER BY measure_value DESC) AS rank_order,
+  DENSE_RANK() OVER (ORDER BY measure_value DESC) AS dense_rank_order
+FROM
+  percentile_values
+WHERE
+  percentile = 1
+ORDER BY
+  measure_value ASC;
+
+The values 0 are weird but the other ones above 1.5 kg are valid because they can be referring to babies.
