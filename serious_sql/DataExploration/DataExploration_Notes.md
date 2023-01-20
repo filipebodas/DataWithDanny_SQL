@@ -646,3 +646,42 @@ ORDER BY
   measure_value ASC;
 
 The values 0 are weird but the other ones above 1.5 kg are valid because they can be referring to babies.
+
+Now, to clean the dataset one approach can be to simply remove the outliers and recalculate the summary statistics again.
+
+```sql
+DROP TABLE IF EXISTS clean_weight_logs;
+
+CREATE TEMP TABLE clean_weight_logs AS (
+  SELECT *
+  FROM
+    health.user_logs
+  WHERE
+    measure = 'weight' AND
+    measure_value > 0 AND 
+    measure_value < 201
+);
+
+SELECT
+  MIN(measure_value) AS min_value,
+  MAX(measure_value)AS max_value,
+  AVG(measure_value) AS mean,
+  ROUND (
+    CAST (PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY measure_value) AS NUMERIC),
+    2
+  ) AS median,
+  ROUND (
+    MODE() WITHIN GROUP (ORDER BY measure_value),
+    2
+  ) AS mode,
+  ROUND (
+    STDDEV(measure_value), 
+    2
+  ) AS standard_deviation,
+  ROUND (
+    VARIANCE(measure_value),
+    2
+  ) AS variance
+FROM 
+  clean_weight_logs;
+```
